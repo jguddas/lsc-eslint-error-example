@@ -1,35 +1,42 @@
 // https://github.com/wcjohnson/lightscript/blob/4.0/playground/src/test.lsc
 
+import {
+  getLoc
+  placeAtLoc as atLoc
+  placeAtNode as atNode
+  getSurroundingLoc
+  span
+} from 'ast-loc-utils'
+
 import t from './types'
 import { transformTails } from './tails'
 import { isa } from './is'
 import { toStatement } from './blocks'
 
-import { getLoc, placeAtLoc as atLoc, placeAtNode as atNode, getSurroundingLoc, span } from 'ast-loc-utils'
-
 validateComprehensionBody(path) ->
   path.traverse({
     noScope: true
 
-    Function(path): void -> path.skip()
+    Function(_path): void -> _path.skip()
 
     AwaitExpression(awaitPath) ->
       throw awaitPath.buildCodeFrameError(
-        "`await` is not allowed within Comprehensions; " +
-        "instead, await the Comprehension (eg; `y <- [for x of xs: x]`)."
+        '`await` is not allowed within Comprehensions; '
+        + 'instead, await the Comprehension (eg; `y <- [for x of xs: x]`).'
       )
 
     YieldExpression(yieldPath) ->
-      throw yieldPath.buildCodeFrameError("`yield` is not allowed within Comprehensions.")
+      throw yieldPath.buildCodeFrameError('`yield` is not allowed within Comprehensions.')
 
     ReturnStatement(returnPath) ->
-      throw returnPath.buildCodeFrameError("`return` is not allowed within Comprehensions.");
+      throw returnPath.buildCodeFrameError('`return` is not allowed within Comprehensions.')
   })
 
 iife(body, id, initializer) ->
   loc = body~getSurroundingLoc()
 
-  body.unshift(t.variableDeclaration("const",
+  body.unshift(t.variableDeclaration(
+    'const'
     [t.variableDeclarator(id, initializer)~atNode(id)]
   )~atNode(id))
   body.push(t.returnStatement(id)~atLoc(loc~span(-1)))
@@ -48,21 +55,23 @@ retailObject(path, id, transformPathName, returnPathName) ->
     false
     (seqExpr, tailPath) ->
       if (
-        seqExpr.type !== "SequenceExpression" or
-        seqExpr.expressions.length !== 2
+        seqExpr.type !== 'SequenceExpression'
+        or seqExpr.expressions.length !== 2
       ):
-        throw tailPath.buildCodeFrameError("Object comprehensions must end" +
-        " with a (key, value) pair.")
+        throw tailPath.buildCodeFrameError('Object comprehensions must end'
+        + ' with a (key, value) pair.')
 
-      [ keyExpr, valExpr ] = seqExpr.expressions
+      [keyExpr, valExpr] = seqExpr.expressions
 
-      t.assignmentExpression("=",
-        t.memberExpression(id, keyExpr, true)~atNode(seqExpr),
+      t.assignmentExpression(
+        '='
+        t.memberExpression(id, keyExpr, true)~atNode(seqExpr)
         valExpr
       )~atNode(seqExpr)
   )
 
   path.get(returnPathName).node
+
 
 retailArray(path, id, transformPathName, returnPathName) ->
   transformPath = path.get(transformPathName)
@@ -73,7 +82,7 @@ retailArray(path, id, transformPathName, returnPathName) ->
     false
     (expr) ->
       t.callExpression(
-        t.memberExpression(id, t.identifier("push")~atNode(expr))~atNode(expr)
+        t.memberExpression(id, t.identifier('push')~atNode(expr))~atNode(expr)
         [expr]
       )~atNode(expr)
   )
@@ -82,15 +91,15 @@ retailArray(path, id, transformPathName, returnPathName) ->
 
 transformLoop(path, ref, isObject, stmts) ->
   if isObject:
-    stmts.push(retailObject(path, ref, "loop.body", "loop"))
+    stmts.push(retailObject(path, ref, 'loop.body', 'loop'))
   else:
-    stmts.push(retailArray(path, ref, "loop.body", "loop"))
+    stmts.push(retailArray(path, ref, 'loop.body', 'loop'))
 
 transformCase(path, ref, isObject, stmts) ->
   if isObject:
-    stmts.push(retailObject(path, ref, "conditional", "conditional"))
+    stmts.push(retailObject(path, ref, 'conditional', 'conditional'))
   else:
-    stmts.push(retailArray(path, ref, "conditional", "conditional"))
+    stmts.push(retailArray(path, ref, 'conditional', 'conditional'))
 
 pushBundle(stmts, ref, bundle, isObject) ->
   if isObject:
@@ -98,7 +107,8 @@ pushBundle(stmts, ref, bundle, isObject) ->
     for elem property in bundle:
       loc = property~getLoc()
       stmts.push(
-        t.assignmentExpression("="
+        t.assignmentExpression(
+          '='
           t.memberExpression(ref, property.key, property.computed)~atLoc(loc)
           property.value
         )~atLoc(loc)~toStatement()
@@ -108,7 +118,7 @@ pushBundle(stmts, ref, bundle, isObject) ->
     // _ref.push(bundle...)
     stmts.push(
       t.callExpression(
-        t.memberExpression(ref, t.identifier("push")~atLoc(loc))~atLoc(loc)
+        t.memberExpression(ref, t.identifier('push')~atLoc(loc))~atLoc(loc)
         bundle
       )~atLoc(loc)~toStatement()
     )
@@ -116,31 +126,35 @@ pushBundle(stmts, ref, bundle, isObject) ->
 export transformComprehension(path, isObject) ->
   { node } = path
   elements = if isObject: node.properties else: node.elements
-  nodeKey = if isObject: "properties" else: "elements"
+  nodeKey = if isObject: 'properties' else: 'elements'
   stmts = []
-  id = path.scope.generateUidIdentifier(isObject ? "obj" : "arr")~t.clone()~atLoc(getLoc(node)~span(1))
+  id = path.scope.generateUidIdentifier(isObject ? 'obj' : 'arr')~t.clone()~atLoc(getLoc(node)~span(1))
 
-  let i = 0, len = elements.length, bundle = [], first = true, initializer
+  len = elements.length
+  let i = 0
+  let bundle = []
+  let first = true
+  let initializer
   while i < len:
     element = elements[i]
-    if element~isa("Comprehension"):
+    if element~isa('Comprehension'):
       if first:
         now initializer = bundle
         now first = false
-      else:
-        if bundle.length > 0: stmts~pushBundle(id, bundle, isObject)
+      elif bundle.length > 0:
+        stmts~pushBundle(id, bundle, isObject)
       now bundle = []
 
       match element:
-        | ~isa("LoopComprehension"):
+        | ~isa('LoopComprehension'):
           path.get(`${nodeKey}.${i}`)~transformLoop(id, isObject, stmts)
-        | ~isa("CaseComprehension"):
+        | ~isa('CaseComprehension'):
           path.get(`${nodeKey}.${i}`)~transformCase(id, isObject, stmts)
-        | else: throw new Error("Invalid comprehension node (this is an internal error)")
+        | else: throw new Error('Invalid comprehension node (this is an internal error)')
     else:
       bundle.push(element)
 
-    i++
+    now i += 1
 
   if bundle.length > 0: stmts~pushBundle(id, bundle, isObject)
 
