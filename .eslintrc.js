@@ -13,7 +13,26 @@ module.exports = {
     "es6": true
   },
   rules: {
-    "function-paren-newline": "off", // will throw error if not disabled
-    indent: "off", // will throuw error if not disabled
+
+    // will throw error if not disabled
+    // console.log! 'hello world'
+    "function-paren-newline": "off",
+    indent: "off",
+
+    // will throw error if not disabled
+    // if true or false: console.log('hello')
+    "space-infix-ops": "off",
+
+    // will throw error if not disabled
+    // (() -> console.log())()
+    "arrow-spacing": "off",
+
+    // will stop working without throwing any errors if not disabled
+    // if a:
+    //   console.log('a')
+    // elif b:
+    //   console.log('b')
+    "keyword-spacing": "off",
+
   }
 }
