@@ -1,0 +1,14 @@
+{
+  "name": "lsc-eslint-error-example",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Jakob Guddas <jakob.guddas@openmailbox.org>",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "@lightscript/babel-preset": "^4.0.0-alpha.23",
+    "@lightscript/eslint-plugin": "4.0.0-alpha.23",
+    "eslint": "^5.7.0"
+  }
+}
