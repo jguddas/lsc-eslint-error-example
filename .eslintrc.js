@@ -34,5 +34,11 @@ module.exports = {
     //   console.log('b')
     "keyword-spacing": "off",
 
+    // rules that will not crash eslint but are unnecessary
+    semi: "off",
+    "comma-dangle": "off",
+    "brace-style": "off",
+    "space-before-blocks": "off",
+
   }
 }
