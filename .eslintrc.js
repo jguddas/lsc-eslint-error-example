@@ -21,7 +21,7 @@ module.exports = {
 
     // will throw error if not disabled
     // if true or false: console.log('hello')
-    "space-infix-ops": "off",
+    // "space-infix-ops": "off",
 
     // will throw error if not disabled
     // (() -> console.log())()
